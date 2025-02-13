@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXTRA ENGLISH TEST 6</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .question p {
+            font-weight: bold;
+        }
+        .options {
+            margin-left: 20px;
+        }
+        .options label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: red;
+            margin-bottom: 20px;
+        }
+        .answer {
+            font-weight: bold;
+            color: green;
+            margin-top: 10px;
+        }
+        #submit-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .question .request {
+            white-space: pre-line;  /* Cho phép xuống dòng */
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Bài kiểm tra trắc nghiệm</h1>
+<p id="timer">Thời gian còn lại: 32:00</p>
+
+<!-- Khu vực hiển thị câu hỏi -->
+<div id="quiz-container"></div>
+
+<!-- Nút Nộp bài -->
+<button id="submit-btn">Nộp bài</button>
+
+<!-- Hiển thị kết quả -->
+<p id="result"></p>
+
+<script>
+    // 📌 **Nhập câu hỏi như văn bản thông thường**
+    const questionText = `
+        Section: 1
+        The Apollo Moon landings (1969-1972) brought radiation detectors and soil sensors to the Moon and produced large amounts of data, much of which was stored on outdated technologies. A data transfer project is making the data available again, thereby ____ the Apollo data’s usefulness, as the data are used to study the geology of the Moon.
+        • Which choice completes the text with the most logical and precise word or phrase?
+        A) installing
+        B) renewing
+        C) persisting
+        D) exceeding
+
+        Section: 2
+        Whether the reign of a French monarch such as Francis II or Louis XI was considered historically significant or conversely, relatively ____, its trajectory was shaped by legitimacy and therefore cannot be understood without a corollary the factors that allowed the monarch to assert a claim to the throne successfully.
+        • Which choice completes the text with the most logical and precise word or phrase?
+        A) momentous
+        B) inconsequential
+        C) benevolent
+        D) genuine
+    `;
+
+    // 📌 Nhập danh sách đáp án đúng
+    const answerKey = "1B, 2D";
+
+    // Xử lý danh sách đáp án đúng
+    const correctAnswers = answerKey.split(", ").reduce((acc, item) => {
+        const [qNum, ans] = item.match(/\d+|\D+/g);
+        acc[qNum] = ans.trim();
+        return acc;
+    }, {});
+
+    // Tách các câu hỏi theo "Section"
+    const questionBlocks = questionText.trim().split(/Section: \d+/).slice(1);
+
+    // Xử lý từng câu hỏi, giữ nguyên định dạng đầy đủ
+    const questions = questionBlocks.map((block, index) => {
+        const lines = block.trim().split("\n").map(line => line.trim());
+
+        // Lấy nội dung câu hỏi đầy đủ (bao gồm cả yêu cầu của đề)
+        let questionIndex = lines.findIndex(line => line.startsWith("A)")); // Xác định vị trí đáp án đầu tiên
+        const questionText = lines.slice(0, questionIndex).join(" "); // Nội dung câu hỏi đầy đủ
+        const options = lines.slice(questionIndex); // Đáp án A, B, C, D
+
+        return {
+            question: questionText,
+            options,
+            answer: correctAnswers[index + 1]
+        };
+    });
+
+    // Hiển thị câu hỏi trên giao diện
+    const quizContainer = document.getElementById("quiz-container");
+    questions.forEach((data, index) => {
+        const section = document.createElement("div");
+        section.classList.add("section");
+        section.dataset.question = `q${index + 1}`;
+        section.innerHTML = `
+            <h2>Question ${index + 1}</h2>
+            <p class="request">${data.question}</p>
+            <div class="question">
+                <div class="options">
+                    ${data.options.map(opt => `
+                        <label><input type="radio" name="q${index + 1}" value="${opt[0]}"> ${opt}</label>
+                    `).join("")}
+                </div>
+                <p class="answer"></p> <!-- Nơi hiển thị đáp án -->
+            </div>
+        `;
+        quizContainer.appendChild(section);
+    });
+
+    // Đồng hồ đếm ngược
+    let timer = 32 * 60; // 32 phút tính theo giây
+    const timerElement = document.getElementById("timer");
+    
+    const countdown = setInterval(() => {
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        timerElement.textContent = `Thời gian còn lại: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        timer--;
+
+        if (timer < 0) {
+            clearInterval(countdown); // Dừng đồng hồ khi hết giờ
+            alert("Hết thời gian!");
+            document.getElementById("submit-btn").click(); // Tự động nộp bài khi hết giờ
+        }
+    }, 1000);
+
+    // Xử lý sự kiện khi nhấn nút Nộp bài
+    document.getElementById("submit-btn").addEventListener("click", function () {
+        clearInterval(countdown); // Dừng đồng hồ khi nộp bài
+        let correctCount = 0;
+        
+        questions.forEach((data, index) => {
+            const selectedOption = document.querySelector(`input[name="q${index + 1}"]:checked`);
+            const answerElement = document.querySelector(`.section[data-question="q${index + 1}"] .answer`);
+
+            if (selectedOption) {
+                if (selectedOption.value === data.answer) {
+                    correctCount++;
+                    answerElement.style.color = "green";
+                } else {
+                    answerElement.style.color = "red";
+                }
+            } else {
+                answerElement.style.color = "red";
+            }
+            
+            answerElement.textContent = `Đáp án đúng: ${data.answer}`;
+        });
+
+        document.getElementById("result").textContent = `Bạn đã trả lời đúng ${correctCount}/${questions.length} câu.`;
+    });
+</script>
+
+</body>
+</html>
